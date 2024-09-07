@@ -1,0 +1,361 @@
+/*********************************************************************
+* Description:
+* This project demonstrates how to program the PIC32 microcontroller so as to show the state of a switch (attached to the RB0 pin) on an LED (attached to the RB8 pin), in real time.
+********************************************************************/
+#include <xc.h>
+#include "configbits.c"
+.global main
+    
+.data
+numbers_first:
+.word 0x13F, 0x106, 0x15B, 0x14F, 0x166, 0x16D, 0x17D, 0x107, 0x17F, 0x16F
+numbers_second:
+.word 0x23F, 0x206, 0x25B, 0x24F, 0x266, 0x26D, 0x27D, 0x207, 0x27F, 0x26F
+numbers_third:
+.word 0x43F, 0x406, 0x45B, 0x44F, 0x466, 0x46D, 0x47D, 0x407, 0x47F, 0x46F
+numbers_fourth:
+.word 0x83F, 0x806, 0x85B, 0x84F, 0x866, 0x86D, 0x87D, 0x807, 0x87F, 0x86F
+.text
+    
+.ent main
+    
+main:
+// As we want the B port (meaning pins B0, B1, ..., B15) to be digital I/O, ANSELB = 0x0000:
+la $8, ANSELB// Now $8 contains the memory address of ANSELB (which is 0xbf88_6100 as the datasheet asserts), so now we can edit the ANSELB.
+sw $0, 0($8)// ANSELB = 0x0000
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* sw $0, 0x6100($8)
+*/
+/* Now we are going to assign B0, B1, ..., B7 as inputs to read from these pins and B8, B9, ..., B15 as outputs. (Note that in this particular project we do not need RA pins)
+* So TRISB[0] = TRISB[1] = ... = TRISB[7] = 1 and TRISB[8] = TRISB[9] = ... = TRISB[15] = 0.
+* Therefore TRISB = 0x00ff
+*/
+la $8, TRISB// Now $8 contains the memory address of TRISB (which is 0xbf88_6110 as the datasheet asserts), so now we can edit the TRISB.
+ori $9, $0, 0x0000
+sw $9, 0($8)// TRISB = 0x00ff
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* ori $9, $0, 0x00ff
+* sw $9, 0x6110($8)
+*/
+// Now RB0 to RB7 are set as inputs and RB8 to RB15 are set as outputs.
+// We should have the address of PORTB to read from it and to detect any input; while we also need to have the address of LATB to write in it and show outputs:
+la $10, PORTB// Now $10 contains the memory address of PORTB (which is 0xbf88_6120 as the datasheet asserts), so now we can read PORTB.
+la $11, LATB// Now $11 contains the memory address of LATB (which is 0xbf88_6130 as the datasheet asserts), so now we can edit the LATB.
+
+la $2, numbers_first
+la $3, numbers_second
+la $4, numbers_third
+la $5, numbers_fourth
+    
+addi $21,$0,1
+addi $22,$0,0
+addi $23,$0,1000
+    
+addi $16,$0,1
+addi $17,$0,0
+addi $18,0x1ff
+    
+loop:  
+
+lw $6,36($5)
+lw $7,36($4)
+lw $8,4($3)
+lw $9,0($2)
+loop1:
+sw $6, 0($11)
+    loop1_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop1_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop1_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop1_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop1_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop1_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop1_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop1_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop1
+and $22,$22,0
+   
+lw $6,36($5)
+lw $7,4($4)
+lw $8,0($3)
+lw $9,4($2)
+loop2:
+sw $6, 0($11)
+    loop2_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop2_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop2_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop2_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop2_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop2_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop2_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop2_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop2
+and $22,$22,0
+    
+lw $6,4($5)
+lw $7,0($4)
+lw $8,4($3)
+lw $9,28($2)
+loop3:
+sw $6, 0($11)
+    loop3_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop3_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop3_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop3_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop3_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop3_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop3_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop3_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop3
+and $22,$22,0
+    
+lw $6,0($5)
+lw $7,4($4)
+lw $8,28($3)
+lw $9,0($2)
+loop4:
+sw $6, 0($11)
+    loop4_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop4_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop4_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop4_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop4_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop4_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop4_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop4_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop4
+and $22,$22,0
+    
+lw $6,4($5)
+lw $7,28($4)
+lw $8,0($3)
+lw $9,20($2)
+loop5:
+sw $6, 0($11)
+    loop5_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop5_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop5_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop5_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop5_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop5_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop5_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop5_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop5
+and $22,$22,0
+    
+lw $6,28($5)
+lw $7,0($4)
+lw $8,20($3)
+loop6:
+sw $6, 0($11)
+    loop6_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop6_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop6_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop6_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop6_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop6_3
+    and $17,$17,0
+    loop6_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop6_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop6
+and $22,$22,0
+    
+lw $6,0($5)
+lw $7,20($4)
+lw $9,36($2)
+loop7:
+sw $6, 0($11)
+    loop7_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop7_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop7_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop7_2
+    and $17,$17,0
+    loop7_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop7_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop7_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop7_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop7
+and $22,$22,0
+    
+lw $6,20($5)
+lw $8,36($3)
+lw $9,36($2)
+loop8:
+sw $6, 0($11)
+    loop8_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop8_1
+    and $17,$17,0
+    loop8_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop8_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop8_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop8_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop8_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop8_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop8
+and $22,$22,0
+    
+lw $7,36($4)
+lw $8,36($3)
+lw $9,4($2)
+loop9:
+    loop9_1:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop9_1
+    and $17,$17,0
+sw $7, 0($11)
+    loop9_2:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop9_2
+    and $17,$17,0
+sw $8, 0($11)
+    loop9_3:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop9_3
+    and $17,$17,0
+sw $9, 0($11)
+    loop9_4:
+    addi $17,$17,1
+    sltu $19,$17,$18
+    beq $19,$16,loop9_4
+    and $17,$17,0
+addi $22,$22,1
+sltu $24,$22,$23
+beq $24,$21,loop9
+and $22,$22,0
+    
+j loop  
+.end main

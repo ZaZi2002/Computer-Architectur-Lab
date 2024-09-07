@@ -1,0 +1,348 @@
+/*********************************************************************
+* Description:
+* This project demonstrates how to program the PIC32 microcontroller so as to show the state of a switch (attached to the RB0 pin) on an LED (attached to the RB8 pin), in real time.
+********************************************************************/
+#include <xc.h>
+#include "configbits.c"
+.global main
+    
+.data
+numbers_first:
+.word 0x13F, 0x106, 0x15B, 0x14F, 0x166, 0x16D, 0x17D, 0x107, 0x17F, 0x16F
+numbers_second:
+.word 0x23F, 0x206, 0x25B, 0x24F, 0x266, 0x26D, 0x27D, 0x207, 0x27F, 0x26F
+numbers_third:
+.word 0x43F, 0x406, 0x45B, 0x44F, 0x466, 0x46D, 0x47D, 0x407, 0x47F, 0x46F
+numbers_fourth:
+.word 0x83F, 0x806, 0x85B, 0x84F, 0x866, 0x86D, 0x87D, 0x807, 0x87F, 0x86F
+.text
+    
+.ent main
+    
+main:
+// As we want the B port (meaning pins B0, B1, ..., B15) to be digital I/O, ANSELB = 0x0000:
+la $8, ANSELB// Now $8 contains the memory address of ANSELB (which is 0xbf88_6100 as the datasheet asserts), so now we can edit the ANSELB.
+sw $0, 0($8)// ANSELB = 0x0000
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* sw $0, 0x6100($8)
+*/
+/* Now we are going to assign B0, B1, ..., B7 as inputs to read from these pins and B8, B9, ..., B15 as outputs. (Note that in this particular project we do not need RA pins)
+* So TRISB[0] = TRISB[1] = ... = TRISB[7] = 1 and TRISB[8] = TRISB[9] = ... = TRISB[15] = 0.
+* Therefore TRISB = 0x00ff
+*/
+la $8, TRISB// Now $8 contains the memory address of TRISB (which is 0xbf88_6110 as the datasheet asserts), so now we can edit the TRISB.
+ori $9, $0, 0x0000
+sw $9, 0($8)// TRISB = 0x00ff
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* ori $9, $0, 0x00ff
+* sw $9, 0x6110($8)
+*/
+// Now RB0 to RB7 are set as inputs and RB8 to RB15 are set as outputs.
+// We should have the address of PORTB to read from it and to detect any input; while we also need to have the address of LATB to write in it and show outputs:
+la $10, PORTB// Now $10 contains the memory address of PORTB (which is 0xbf88_6120 as the datasheet asserts), so now we can read PORTB.
+la $11, LATB// Now $11 contains the memory address of LATB (which is 0xbf88_6130 as the datasheet asserts), so now we can edit the LATB.
+
+la $2, numbers_first
+la $3, numbers_second
+la $4, numbers_third
+la $5, numbers_fourth
+ 
+//delays
+addi $21,$0,1
+addi $22,$0,0
+addi $23,$0,0x2005
+  
+//constant numbers
+addi $25,$0,9
+addi $26,$0,5
+addi $18,$0,0
+    
+//counting
+addi $12,$0,-1
+addi $13,$0,0
+addi $14,$0,0
+addi $15,$0,0
+addi $16,$0,0
+addi $17,$0,0
+addi $19,$0,0
+addi $20,$0,0
+    
+loop:
+    addi $12,$12,1
+    bne $12,$25,done_counting
+    bne $13,$26,adding_second
+    bne $14,$25,adding_third
+    bne $15,$26,adding_fourth
+    bne $16,$25,adding_fifth
+    bne $17,$26,adding_sixth
+    adding_sixth:
+	addi $17,$17,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	andi $15,$15,0
+	andi $16,$16,0
+	j done_counting
+    adding_fifth:
+	addi $16,$16,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	andi $15,$15,0
+	j done_counting 
+    adding_fourth:
+	addi $15,$15,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	j done_counting
+    adding_third:
+	addi $14,$14,1
+	andi $12,$12,0
+	andi $13,$13,0
+	j done_counting
+    adding_second:
+	addi $13,$13,1
+	andi $12,$12,0
+	j done_counting
+    done_counting:
+    
+    beq $12,$18,first_0
+    addi $18,$18,1
+    beq $12,$18,first_1
+    addi $18,$18,1
+    beq $12,$18,first_2
+    addi $18,$18,1
+    beq $12,$18,first_3
+    addi $18,$18,1
+    beq $12,$18,first_4
+    addi $18,$18,1
+    beq $12,$18,first_5
+    addi $18,$18,1
+    beq $12,$18,first_6
+    addi $18,$18,1
+    beq $12,$18,first_7
+    addi $18,$18,1
+    beq $12,$18,first_8
+    addi $18,$18,1
+    beq $12,$18,first_9
+    addi $18,$18,1
+    first_0:
+	lw $6,0($2)
+	andi $18,$18,0
+	j done_first
+    first_1:
+	lw $6,4($2)
+	andi $18,$18,0
+	j done_first
+    first_2:
+	lw $6,8($2)
+	andi $18,$18,0
+	j done_first
+    first_3:
+	lw $6,12($2)
+	andi $18,$18,0
+	j done_first
+    first_4:
+	lw $6,16($2)
+	andi $18,$18,0
+	j done_first
+    first_5:
+	lw $6,20($2)
+	andi $18,$18,0
+	j done_first
+    first_6:
+	lw $6,24($2)
+	andi $18,$18,0
+	j done_first
+    first_7:
+	lw $6,28($2)
+	andi $18,$18,0
+	j done_first
+    first_8:
+	lw $6,32($2)
+	andi $18,$18,0
+	j done_first
+    first_9:
+	lw $6,36($2)
+	andi $18,$18,0
+	j done_first
+    done_first:
+    
+    beq $13,$18,second_0
+    addi $18,$18,1
+    beq $13,$18,second_1
+    addi $18,$18,1
+    beq $13,$18,second_2
+    addi $18,$18,1
+    beq $13,$18,second_3
+    addi $18,$18,1
+    beq $13,$18,second_4
+    addi $18,$18,1
+    beq $13,$18,second_5
+    addi $18,$18,1
+    second_0:
+	lw $7,0($3)
+	andi $18,$18,0
+	j done_second
+    second_1:
+	lw $7,4($3)
+	andi $18,$18,0
+	j done_second
+    second_2:
+	lw $7,8($3)
+	andi $18,$18,0
+	j done_second
+    second_3:
+	lw $7,12($3)
+	andi $18,$18,0
+	j done_second
+    second_4:
+	lw $7,16($3)
+	andi $18,$18,0
+	j done_second
+    second_5:
+	lw $7,20($3)
+	andi $18,$18,0
+	j done_second
+    done_second:
+    
+    beq $14,$18,third_0
+    addi $18,$18,1
+    beq $14,$18,third_1
+    addi $18,$18,1
+    beq $14,$18,third_2
+    addi $18,$18,1
+    beq $14,$18,third_3
+    addi $18,$18,1
+    beq $14,$18,third_4
+    addi $18,$18,1
+    beq $14,$18,third_5
+    addi $18,$18,1
+    beq $14,$18,third_6
+    addi $18,$18,1
+    beq $14,$18,third_7
+    addi $18,$18,1
+    beq $14,$18,third_8
+    addi $18,$18,1
+    beq $14,$18,third_9
+    addi $18,$18,1
+    third_0:
+	lw $8,0($4)
+	andi $18,$18,0
+	j done_third
+    third_1:
+	lw $8,4($4)
+	andi $18,$18,0
+	j done_third
+    third_2:
+	lw $8,8($4)
+	andi $18,$18,0
+	j done_third
+    third_3:
+	lw $8,12($4)
+	andi $18,$18,0
+	j done_third
+    third_4:
+	lw $8,16($4)
+	andi $18,$18,0
+	j done_third
+    third_5:
+	lw $8,20($4)
+	andi $18,$18,0
+	j done_third
+    third_6:
+	lw $8,24($4)
+	andi $18,$18,0
+	j done_third
+    third_7:
+	lw $8,28($4)
+	andi $18,$18,0
+	j done_third
+    third_8:
+	lw $8,32($4)
+	andi $18,$18,0
+	j done_third
+    third_9:
+	lw $8,36($4)
+	andi $18,$18,0
+	j done_third
+    done_third:
+ 
+    beq $15,$18,fourth_0
+    addi $18,$18,1
+    beq $15,$18,fourth_1
+    addi $18,$18,1
+    beq $15,$18,fourth_2
+    addi $18,$18,1
+    beq $15,$18,fourth_3
+    addi $18,$18,1
+    beq $15,$18,fourth_4
+    addi $18,$18,1
+    beq $15,$18,fourth_5
+    addi $18,$18,1
+    fourth_0:
+	lw $9,0($5)
+	andi $18,$18,0
+	j done_fourth
+    fourth_1:
+	lw $9,4($5)
+	andi $18,$18,0
+	j done_fourth
+    fourth_2:
+	lw $9,8($5)
+	andi $18,$18,0
+	j done_fourth
+    fourth_3:
+	lw $9,12($5)
+	andi $18,$18,0
+	j done_fourth
+    fourth_4:
+	lw $9,16($5)
+	andi $18,$18,0
+	j done_fourth
+    fourth_5:
+	lw $9,20($5)
+	andi $18,$18,0
+	j done_fourth
+    done_fourth:
+    
+loop1:
+    sw $6, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop1
+    and $22,$22,0
+    
+loop2:
+    sw $7, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop2
+    and $22,$22,0
+
+loop3:
+    sw $8, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop3
+    and $22,$22,0
+
+loop4:
+    sw $9, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop4
+    and $22,$22,0
+    
+loop_delay:
+    addi $22,$22,2
+    sltu $24,$22,$23
+    beq $24,$21,loop_delay
+    and $22,$22,0
+    
+j loop
+    
+.end main

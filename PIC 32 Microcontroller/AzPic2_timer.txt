@@ -1,0 +1,581 @@
+/*********************************************************************
+* Description:
+* This project demonstrates how to program the PIC32 microcontroller so as to show the state of a switch (attached to the RB0 pin) on an LED (attached to the RB8 pin), in real time.
+********************************************************************/
+#include <xc.h>
+#include "configbits.c"
+.global main
+    
+.data
+numbers_first:
+.word 0x13F, 0x106, 0x15B, 0x14F, 0x166, 0x16D, 0x17D, 0x107, 0x17F, 0x16F
+numbers_second:
+.word 0x23F, 0x206, 0x25B, 0x24F, 0x266, 0x26D, 0x27D, 0x207, 0x27F, 0x26F
+numbers_third:
+.word 0x4bF, 0x486, 0x4dB, 0x4cF, 0x4e6, 0x4eD, 0x4fD, 0x487, 0x4fF, 0x4eF
+numbers_fourth:
+.word 0x83F, 0x806, 0x85B, 0x84F, 0x866, 0x86D, 0x87D, 0x807, 0x87F, 0x86F
+.text
+    
+.ent main
+    
+main:
+// As we want the B port (meaning pins B0, B1, ..., B15) to be digital I/O, ANSELB = 0x0000:
+la $8, ANSELB// Now $8 contains the memory address of ANSELB (which is 0xbf88_6100 as the datasheet asserts), so now we can edit the ANSELB.
+sw $0, 0($8)// ANSELB = 0x0000
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* sw $0, 0x6100($8)
+*/
+/* Now we are going to assign B0, B1, ..., B7 as inputs to read from these pins and B8, B9, ..., B15 as outputs. (Note that in this particular project we do not need RA pins)
+* So TRISB[0] = TRISB[1] = ... = TRISB[7] = 1 and TRISB[8] = TRISB[9] = ... = TRISB[15] = 0.
+* Therefore TRISB = 0x00ff
+*/
+la $8, TRISB// Now $8 contains the memory address of TRISB (which is 0xbf88_6110 as the datasheet asserts), so now we can edit the TRISB.
+ori $9, $0, 0x0000
+sw $9, 0($8)// TRISB = 0x00ff
+/* The equivalent instruction for the instructions above is:
+* lui $8, 0xbf88
+* ori $9, $0, 0x00ff
+* sw $9, 0x6110($8)
+*/
+// Now RB0 to RB7 are set as inputs and RB8 to RB15 are set as outputs.
+// We should have the address of PORTB to read from it and to detect any input; while we also need to have the address of LATB to write in it and show outputs:
+la $10, PORTB// Now $10 contains the memory address of PORTB (which is 0xbf88_6120 as the datasheet asserts), so now we can read PORTB.
+la $11, LATB// Now $11 contains the memory address of LATB (which is 0xbf88_6130 as the datasheet asserts), so now we can edit the LATB.
+
+la $2, numbers_first
+la $3, numbers_second
+la $4, numbers_third
+la $5, numbers_fourth
+ 
+//delays
+addi $21,$0,1
+addi $22,$0,0
+addi $23,$0,0x1400
+  
+//constant numbers
+addi $25,$0,9
+addi $26,$0,5
+addi $18,$0,0
+addi $19,$0,0
+    
+//counting
+addi $12,$0,-1
+addi $13,$0,0
+addi $14,$0,0
+addi $15,$0,0
+addi $16,$0,0
+addi $17,$0,0
+    
+loop:
+    addi $12,$12,1
+    bne $12,$25,done_counting
+    bne $13,$25,adding_second
+    bne $14,$25,adding_third
+    bne $15,$26,adding_fourth
+    addi $19,$19,1
+    bne $16,$25,adding_fifth
+    bne $17,$26,adding_sixth
+    adding_sixth:
+	addi $17,$17,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	andi $15,$15,0
+	andi $16,$16,0
+	j done_counting
+    adding_fifth:
+	addi $16,$16,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	andi $15,$15,0
+	j done_counting 
+    adding_fourth:
+	addi $15,$15,1
+	andi $12,$12,0
+	andi $13,$13,0
+	andi $14,$14,0
+	j done_counting
+    adding_third:
+	addi $14,$14,1
+	andi $12,$12,0
+	andi $13,$13,0
+	j done_counting
+    adding_second:
+	addi $13,$13,1
+	andi $12,$12,0
+	j done_counting
+    done_counting:
+    
+    bne $19,$0,done_first
+    beq $12,$18,first_0
+    addi $18,$18,1
+    beq $12,$18,first_1
+    addi $18,$18,1
+    beq $12,$18,first_2
+    addi $18,$18,1
+    beq $12,$18,first_3
+    addi $18,$18,1
+    beq $12,$18,first_4
+    addi $18,$18,1
+    beq $12,$18,first_5
+    addi $18,$18,1
+    beq $12,$18,first_6
+    addi $18,$18,1
+    beq $12,$18,first_7
+    addi $18,$18,1
+    beq $12,$18,first_8
+    addi $18,$18,1
+    beq $12,$18,first_9
+    addi $18,$18,1
+    first_0:
+	lw $6,0($2)
+	andi $18,$18,0
+	j done_first
+    first_1:
+	lw $6,4($2)
+	andi $18,$18,0
+	j done_first
+    first_2:
+	lw $6,8($2)
+	andi $18,$18,0
+	j done_first
+    first_3:
+	lw $6,12($2)
+	andi $18,$18,0
+	j done_first
+    first_4:
+	lw $6,16($2)
+	andi $18,$18,0
+	j done_first
+    first_5:
+	lw $6,20($2)
+	andi $18,$18,0
+	j done_first
+    first_6:
+	lw $6,24($2)
+	andi $18,$18,0
+	j done_first
+    first_7:
+	lw $6,28($2)
+	andi $18,$18,0
+	j done_first
+    first_8:
+	lw $6,32($2)
+	andi $18,$18,0
+	j done_first
+    first_9:
+	lw $6,36($2)
+	andi $18,$18,0
+	j done_first
+    done_first:
+    
+    
+    bne $19,$0,done_second
+    beq $13,$18,second_0
+    addi $18,$18,1
+    beq $13,$18,second_1
+    addi $18,$18,1
+    beq $13,$18,second_2
+    addi $18,$18,1
+    beq $13,$18,second_3
+    addi $18,$18,1
+    beq $13,$18,second_4
+    addi $18,$18,1
+    beq $13,$18,second_5
+    addi $18,$18,1
+    beq $13,$18,second_6
+    addi $18,$18,1
+    beq $13,$18,second_7
+    addi $18,$18,1
+    beq $13,$18,second_8
+    addi $18,$18,1
+    beq $13,$18,second_9
+    addi $18,$18,1
+    second_0:
+	lw $7,0($3)
+	andi $18,$18,0
+	j done_second
+    second_1:
+	lw $7,4($3)
+	andi $18,$18,0
+	j done_second
+    second_2:
+	lw $7,8($3)
+	andi $18,$18,0
+	j done_second
+    second_3:
+	lw $7,12($3)
+	andi $18,$18,0
+	j done_second
+    second_4:
+	lw $7,16($3)
+	andi $18,$18,0
+	j done_second
+    second_5:
+	lw $7,20($3)
+	andi $18,$18,0
+	j done_second
+    second_6:
+	lw $7,24($3)
+	andi $18,$18,0
+	j done_second
+    second_7:
+	lw $7,28($3)
+	andi $18,$18,0
+	j done_second
+    second_8:
+	lw $7,32($3)
+	andi $18,$18,0
+	j done_second
+    second_9:
+	lw $7,36($3)
+	andi $18,$18,0
+	j done_second
+    done_second:
+    
+    bne $19,$0,done_third1
+    beq $14,$18,third_01
+    addi $18,$18,1
+    beq $14,$18,third_11
+    addi $18,$18,1
+    beq $14,$18,third_21
+    addi $18,$18,1
+    beq $14,$18,third_31
+    addi $18,$18,1
+    beq $14,$18,third_41
+    addi $18,$18,1
+    beq $14,$18,third_51
+    addi $18,$18,1
+    beq $14,$18,third_61
+    addi $18,$18,1
+    beq $14,$18,third_71
+    addi $18,$18,1
+    beq $14,$18,third_81
+    addi $18,$18,1
+    beq $14,$18,third_91
+    addi $18,$18,1
+    third_01:
+	lw $8,0($4)
+	andi $18,$18,0
+	j done_third1
+    third_11:
+	lw $8,4($4)
+	andi $18,$18,0
+	j done_third1
+    third_21:
+	lw $8,8($4)
+	andi $18,$18,0
+	j done_third1
+    third_31:
+	lw $8,12($4)
+	andi $18,$18,0
+	j done_third1
+    third_41:
+	lw $8,16($4)
+	andi $18,$18,0
+	j done_third1
+    third_51:
+	lw $8,20($4)
+	andi $18,$18,0
+	j done_third1
+    third_61:
+	lw $8,24($4)
+	andi $18,$18,0
+	j done_third1
+    third_71:
+	lw $8,28($4)
+	andi $18,$18,0
+	j done_third1
+    third_81:
+	lw $8,32($4)
+	andi $18,$18,0
+	j done_third1
+    third_91:
+	lw $8,36($4)
+	andi $18,$18,0
+	j done_third1
+    done_third1:
+    
+    beq $19,$0,done_third2
+    beq $14,$18,third_02
+    addi $18,$18,1
+    beq $14,$18,third_12
+    addi $18,$18,1
+    beq $14,$18,third_22
+    addi $18,$18,1
+    beq $14,$18,third_32
+    addi $18,$18,1
+    beq $14,$18,third_42
+    addi $18,$18,1
+    beq $14,$18,third_52
+    addi $18,$18,1
+    beq $14,$18,third_62
+    addi $18,$18,1
+    beq $14,$18,third_72
+    addi $18,$18,1
+    beq $14,$18,third_82
+    addi $18,$18,1
+    beq $14,$18,third_92
+    addi $18,$18,1
+    third_02:
+	lw $8,0($2)
+	andi $18,$18,0
+	j done_third2
+    third_12:
+	lw $8,4($2)
+	andi $18,$18,0
+	j done_third2
+    third_22:
+	lw $8,8($2)
+	andi $18,$18,0
+	j done_third2
+    third_32:
+	lw $8,12($2)
+	andi $18,$18,0
+	j done_third2
+    third_42:
+	lw $8,16($2)
+	andi $18,$18,0
+	j done_third2
+    third_52:
+	lw $8,20($2)
+	andi $18,$18,0
+	j done_third2
+    third_62:
+	lw $8,24($2)
+	andi $18,$18,0
+	j done_third2
+    third_72:
+	lw $8,28($2)
+	andi $18,$18,0
+	j done_third2
+    third_82:
+	lw $8,32($2)
+	andi $18,$18,0
+	j done_third2
+    third_92:
+	lw $8,36($2)
+	andi $18,$18,0
+	j done_third2
+    done_third2:
+    
+    bne $19,$0,done_fourth1
+    beq $15,$18,fourth_01
+    addi $18,$18,1
+    beq $15,$18,fourth_11
+    addi $18,$18,1
+    beq $15,$18,fourth_21
+    addi $18,$18,1
+    beq $15,$18,fourth_31
+    addi $18,$18,1
+    beq $15,$18,fourth_41
+    addi $18,$18,1
+    beq $15,$18,fourth_51
+    addi $18,$18,1
+    fourth_01:
+	lw $9,0($5)
+	andi $18,$18,0
+	j done_fourth1
+    fourth_11:
+	lw $9,4($5)
+	andi $18,$18,0
+	j done_fourth1
+    fourth_21:
+	lw $9,8($5)
+	andi $18,$18,0
+	j done_fourth1
+    fourth_31:
+	lw $9,12($5)
+	andi $18,$18,0
+	j done_fourth1
+    fourth_41:
+	lw $9,16($5)
+	andi $18,$18,0
+	j done_fourth1
+    fourth_51:
+	lw $9,20($5)
+	andi $18,$18,0
+	j done_fourth1
+    done_fourth1:
+    
+    beq $19,$0,done_fourth2
+    beq $15,$18,fourth_02
+    addi $18,$18,1
+    beq $15,$18,fourth_12
+    addi $18,$18,1
+    beq $15,$18,fourth_22
+    addi $18,$18,1
+    beq $15,$18,fourth_32
+    addi $18,$18,1
+    beq $15,$18,fourth_42
+    addi $18,$18,1
+    beq $15,$18,fourth_52
+    addi $18,$18,1
+    fourth_02:
+	lw $9,0($3)
+	andi $18,$18,0
+	j done_fourth2
+    fourth_12:
+	lw $9,4($3)
+	andi $18,$18,0
+	j done_fourth2
+    fourth_22:
+	lw $9,8($3)
+	andi $18,$18,0
+	j done_fourth2
+    fourth_32:
+	lw $9,12($3)
+	andi $18,$18,0
+	j done_fourth2
+    fourth_42:
+	lw $9,16($3)
+	andi $18,$18,0
+	j done_fourth2
+    fourth_52:
+	lw $9,20($3)
+	andi $18,$18,0
+	j done_fourth2
+    done_fourth2:
+    
+    beq $19,$0,done_fifth
+    beq $16,$18,fifth_0
+    addi $18,$18,1
+    beq $16,$18,fifth_1
+    addi $18,$18,1
+    beq $16,$18,fifth_2
+    addi $18,$18,1
+    beq $16,$18,fifth_3
+    addi $18,$18,1
+    beq $16,$18,fifth_4
+    addi $18,$18,1
+    beq $16,$18,fifth_5
+    addi $18,$18,1
+    beq $16,$18,fifth_6
+    addi $18,$18,1
+    beq $16,$18,fifth_7
+    addi $18,$18,1
+    beq $16,$18,fifth_8
+    addi $18,$18,1
+    beq $16,$18,fifth_9
+    addi $18,$18,1
+    fifth_0:
+	lw $6,0($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_1:
+	lw $6,4($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_2:
+	lw $6,8($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_3:
+	lw $6,12($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_4:
+	lw $6,16($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_5:
+	lw $6,20($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_6:
+	lw $6,24($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_7:
+	lw $6,28($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_8:
+	lw $6,32($4)
+	andi $18,$18,0
+	j done_fifth
+    fifth_9:
+	lw $6,36($4)
+	andi $18,$18,0
+	j done_fifth
+    done_fifth:
+    
+    beq $19,$0,done_sixth
+    beq $17,$18,sixth_0
+    addi $18,$18,1
+    beq $17,$18,sixth_1
+    addi $18,$18,1
+    beq $17,$18,sixth_2
+    addi $18,$18,1
+    beq $17,$18,sixth_3
+    addi $18,$18,1
+    beq $17,$18,sixth_4
+    addi $18,$18,1
+    beq $17,$18,sixth_5
+    addi $18,$18,1
+    sixth_0:
+	lw $7,0($5)
+	andi $18,$18,0
+	j done_sixth
+    sixth_1:
+	lw $7,4($5)
+	andi $18,$18,0
+	j done_sixth
+    sixth_2:
+	lw $7,8($5)
+	andi $18,$18,0
+	j done_sixth
+    sixth_3:
+	lw $7,12($5)
+	andi $18,$18,0
+	j done_sixth
+    sixth_4:
+	lw $7,16($5)
+	andi $18,$18,0
+	j done_sixth
+    sixth_5:
+	lw $7,20($5)
+	andi $18,$18,0
+	j done_sixth
+    done_sixth: 
+    
+loop1:
+    sw $6, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop1
+    and $22,$22,0
+    
+loop2:
+    sw $7, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop2
+    and $22,$22,0
+
+loop3:
+    sw $8, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop3
+    and $22,$22,0
+
+loop4:
+    sw $9, 0($11)
+    addi $22,$22,1
+    sltu $24,$22,$23
+    beq $24,$21,loop4
+    and $22,$22,0
+    
+loop_delay:
+    addi $22,$22,2
+    sltu $24,$22,$23
+    beq $24,$21,loop_delay
+    and $22,$22,0
+    
+j loop
+    
+.end main
